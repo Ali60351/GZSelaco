@@ -542,6 +542,21 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 	}
 }
 
+VkFormat VkHardwareTexture::GetVkInternalFormat(TexFormat format)
+{
+    switch(format)
+    {
+        case TexFormat::DXT1:
+            return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+        case TexFormat::DXT5:
+            return VK_FORMAT_BC3_UNORM_BLOCK;
+        case TexFormat::DX10:
+            return VK_FORMAT_BC7_UNORM_BLOCK;
+        default:
+            assert(0);
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 VkMaterial::VkMaterial(VulkanRenderDevice* fb, FGameTexture* tex, int scaleflags) : FMaterial(tex, scaleflags), fb(fb)
@@ -629,4 +644,3 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	mDescriptorSets.emplace_back(clampmode, translationp, std::move(descriptor));
 	return mDescriptorSets.back().descriptor.get();
 }
-

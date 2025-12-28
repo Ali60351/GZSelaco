@@ -670,4 +670,5 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 	return true;
 }
 
+
 }

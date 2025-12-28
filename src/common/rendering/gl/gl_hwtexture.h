@@ -7,7 +7,7 @@ class FTexture;
 
 #include "tarray.h"
 #include "hw_ihwtexture.h"
-
+#include "image.h"
 
 #ifdef LoadImage
 #undef LoadImage
