@@ -8,9 +8,19 @@ permissions:
   contents: read
 
 jobs:
-  intel-build:
-    runs-on: macos-15-intel
+  native-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15-intel
+            arch: x86_64
+          - runner: macos-15
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 50
+    env:
+      BUILD_ARCH: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -29,7 +39,7 @@ jobs:
       - name: Sync the MacPorts index
         run: sudo /opt/local/bin/port -N sync
 
-      - name: Install Intel dependencies
+      - name: Install native dependencies
         run: sudo /opt/local/bin/port -N install glib2 libsdl2 libsndfile libvpx MoltenVK openal-soft
 
       - name: Build Selaco.app
@@ -40,7 +50,7 @@ jobs:
           zmusic="$PWD/bin/osx/zmusic"
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release -DOSX_COCOA_BACKEND=OFF \
-            -DCMAKE_OSX_ARCHITECTURES=x86_64 -DPK3_QUIET_ZIPDIR=ON \
+            -DCMAKE_OSX_ARCHITECTURES="$BUILD_ARCH" -DPK3_QUIET_ZIPDIR=ON \
             -DZMUSIC_INCLUDE_DIR="$zmusic/include" \
             -DZMUSIC_LIBRARIES="$zmusic/lib/libzmusic.dylib" \
             '-DOSX_DYNAMIC_LIB=/opt/local/lib/libsndfile.1.dylib;/opt/local/lib/libopenal.1.dylib;/opt/local/lib/libMoltenVK.dylib'
@@ -50,19 +60,19 @@ jobs:
         run: |
           app=build/Selaco.app
           executable="$app/Contents/MacOS/Selaco"
-          xcrun lipo -verify_arch x86_64 "$executable"
+          xcrun lipo "$executable" -verify_arch "$BUILD_ARCH"
           for library in libzmusic.1.dylib libsndfile.1.dylib libopenal.1.dylib libMoltenVK.dylib; do
-            xcrun lipo -verify_arch x86_64 "$app/Contents/Frameworks/$library"
+            xcrun lipo "$app/Contents/Frameworks/$library" -verify_arch "$BUILD_ARCH"
           done
           test -s "$app/Contents/MacOS/gzdoom.pk3"
           otool -L "$executable"
           codesign --force --deep --sign - "$app"
           codesign --verify --deep --strict "$app"
-          ditto -c -k --keepParent "$app" Selaco-intel.zip
+          ditto -c -k --keepParent "$app" "Selaco-$BUILD_ARCH.zip"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Selaco-intel
-          path: Selaco-intel.zip
+          name: Selaco-${{ matrix.arch }}
+          path: Selaco-${{ matrix.arch }}.zip
           if-no-files-found: error
           retention-days: 7
