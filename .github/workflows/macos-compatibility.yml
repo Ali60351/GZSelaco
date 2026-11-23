@@ -1,0 +1,58 @@
+name: macOS compatibility
+
+on:
+  push:
+    branches: [macos/compatibility-check]
+
+permissions:
+  contents: read
+
+jobs:
+  universal-build:
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Universal 2 dependencies
+        run: |
+          package=MacPorts-2.12.7-15-Sequoia.pkg
+          curl --fail --silent --show-error --location --retry 3 \
+            --output "$package" \
+            "https://github.com/macports/macports-base/releases/download/v2.12.7/$package"
+          printf '%s  %s\n' 87b2e87ed7adc4aca947b42eb7ff991614cc0edfccb486237f2bbc75f28aae63 "$package" | shasum -a 256 -c
+          sudo installer -pkg "$package" -target /
+          sudo /opt/local/bin/port -N sync
+          sudo /opt/local/bin/port -N install \
+            glib2 +universal libsdl2 +universal libsndfile +universal \
+            libvpx +universal MoltenVK +universal openal-soft +universal
+
+      - name: Build Selaco.app
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: '3.5'
+          CMAKE_PREFIX_PATH: /opt/local
+        run: bash -e ./build_osx.sh
+
+      - name: Check and archive the app bundle
+        run: |
+          app=build/Selaco.app
+          executable="$app/Contents/MacOS/Selaco"
+          xcrun lipo -verify_arch arm64 x86_64 "$executable"
+          for library in libzmusic.1.dylib libsndfile.1.dylib libopenal.1.dylib libMoltenVK.dylib; do
+            xcrun lipo -verify_arch arm64 x86_64 "$app/Contents/Frameworks/$library"
+          done
+          test -s "$app/Contents/MacOS/gzdoom.pk3"
+          otool -L "$executable"
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict "$app"
+          ditto -c -k --keepParent "$app" Selaco-universal.zip
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Selaco-universal
+          path: Selaco-universal.zip
+          if-no-files-found: error
+          retention-days: 7
