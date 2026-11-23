@@ -473,7 +473,6 @@ FImageSource *DDSImage_TryCreate (FileReader &data, int lumpnum)
 	memset(&dx10header, 0, sizeof(dx10header));
 
 	if (!CheckDDS(data)) return NULL;
-
 	data.Seek(4, FileReader::SeekSet);
 	data.Read (&surfdesc, sizeof(surfdesc));
 
@@ -511,11 +510,11 @@ FImageSource *DDSImage_TryCreate (FileReader &data, int lumpnum)
 
 
 #ifdef __BIG_ENDIAN__
-	// Every single element of the dx10header is also a uint32_t
-	for (unsigned int i = 0; i < sizeof(DDHEADERDX10) / 4; ++i)
-	{
-		dx10Byteswapping[i] = LittleLong(byteswapping[i]);
-	}
+        // Every single element of the dx10header is also a uint32_t
+        for (unsigned int i = 0; i < sizeof(DDHEADERDX10) / 4; ++i)
+        {
+            dx10Byteswapping[i] = LittleLong(byteswapping[i]);
+        }
 #endif
 
 	if (surfdesc.LinearSize > 20971520) {
@@ -619,6 +618,7 @@ int FDDSTexture::ReadCompressedPixels(FileReader* reader, unsigned char** data, 
 	}
 
 	size_t pixelDataSize = lumpSize - headerSize;
+    assert( lumpSize > headerSize );
 
 	unsigned char* cacheData = new unsigned char[lumpSize];
 	reader->Read(cacheData, lumpSize);
