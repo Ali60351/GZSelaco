@@ -1,6 +1,10 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore: [macos/compatibility-check]
+    tags: ['**']
+  pull_request:
 
 jobs:
   build-appimage:
