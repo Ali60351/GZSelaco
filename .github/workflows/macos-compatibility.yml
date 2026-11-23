@@ -2,7 +2,7 @@ name: macOS compatibility
 
 on:
   push:
-    branches: [macos/compatibility-check]
+    branches: [master]
 
 permissions:
   contents: read
