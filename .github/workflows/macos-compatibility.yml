@@ -1,0 +1,76 @@
+name: macOS compatibility
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  universal-build:
+    runs-on: macos-15-intel
+    # Some MacPorts dependencies build from source with +universal.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install MacPorts
+        run: |
+          package=MacPorts-2.12.7-15-Sequoia.pkg
+          curl --fail --silent --show-error --location --retry 3 \
+            --output "$package" \
+            "https://github.com/macports/macports-base/releases/download/v2.12.7/$package"
+          printf '%s  %s\n' 87b2e87ed7adc4aca947b42eb7ff991614cc0edfccb486237f2bbc75f28aae63 "$package" | shasum -a 256 -c
+          sudo installer -pkg "$package" -target /
+
+      - name: Sync the MacPorts index
+        run: sudo /opt/local/bin/port -N sync
+
+      - name: Install Universal 2 dependencies
+        run: |
+          sudo /opt/local/bin/port -N install \
+            glib2 +universal libsdl2 +universal libsndfile +universal \
+            libvpx +universal MoltenVK +universal openal-soft +universal
+
+      - name: Build Selaco.app
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: '3.5'
+          CMAKE_PREFIX_PATH: /opt/local
+        run: |
+          zmusic="$PWD/bin/osx/zmusic"
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release -DOSX_COCOA_BACKEND=OFF \
+            '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DPK3_QUIET_ZIPDIR=ON \
+            -DFORCE_INTERNAL_BZIP2=ON \
+            -DZMUSIC_INCLUDE_DIR="$zmusic/include" \
+            -DZMUSIC_LIBRARIES="$zmusic/lib/libzmusic.dylib" \
+            '-DOSX_DYNAMIC_LIB=/opt/local/lib/libsndfile.1.dylib;/opt/local/lib/libopenal.1.dylib;/opt/local/lib/libMoltenVK.dylib'
+          cmake --build build --parallel 3
+
+      - name: Check and archive the app bundle
+        run: |
+          app=build/Selaco.app
+          executable="$app/Contents/MacOS/Selaco"
+          xcrun lipo "$executable" -verify_arch arm64 x86_64
+          for library in libzmusic.1.dylib libsndfile.1.dylib libopenal.1.dylib libMoltenVK.dylib; do
+            test -s "$app/Contents/Frameworks/$library"
+          done
+          for library in "$app"/Contents/Frameworks/*.dylib; do
+            xcrun lipo "$library" -verify_arch arm64 x86_64
+          done
+          test -s "$app/Contents/MacOS/gzdoom.pk3"
+          otool -L "$executable"
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict "$app"
+          ditto -c -k --keepParent "$app" Selaco-universal.zip
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Selaco-universal
+          path: Selaco-universal.zip
+          if-no-files-found: error
+          retention-days: 7
