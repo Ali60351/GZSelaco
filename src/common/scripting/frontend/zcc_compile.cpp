@@ -747,6 +747,17 @@ void ZCCCompiler::CreateStructTypes()
 		{
 			s->strct->Type->mVersion = s->strct->Version;
 		}
+		if (s->strct->Flags & ZCC_VMInternalStruct)
+		{
+			if (fileSystem.GetFileContainer(Lump) == 0)
+			{
+				s->strct->Type->VMInternalStruct = true;
+			}
+			else
+			{
+				Error(s->strct, "Internal structs are only allowed in the root pk3");
+			}
+		}
 
 		auto &sf = s->Type()->ScopeFlags;
 		if (mVersion >= MakeVersion(2, 4, 0))
@@ -1876,7 +1887,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			{
 				Error(field, "%s: @ not allowed for user scripts", name.GetChars());
 			}
-			retval = ResolveUserType(btype, btype->UserType, outertype? &outertype->Symbols : nullptr, true);
+			retval = ResolveUserType(outertype, btype, btype->UserType, outertype ? &outertype->Symbols : nullptr, true);
 			break;
 
 		case ZCC_UserType:
@@ -1910,7 +1921,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 
 
 			default:
-				retval = ResolveUserType(btype, btype->UserType, outertype ? &outertype->Symbols : nullptr, false);
+				retval = ResolveUserType(outertype, btype, btype->UserType, outertype ? &outertype->Symbols : nullptr, false);
 				break;
 			}
 			break;
@@ -2165,7 +2176,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 * @param nativetype Distinguishes between searching for a native type or a user type.
 * @returns the PType found for this user type
 */
-PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, ZCC_Identifier *id, PSymbolTable *symt, bool nativetype)
+PType *ZCCCompiler::ResolveUserType(PType *outertype, ZCC_BasicType *type, ZCC_Identifier *id, PSymbolTable *symt, bool nativetype)
 {
 	// Check the symbol table for the identifier.
 	PSymbol *sym = nullptr;
@@ -2182,10 +2193,17 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, ZCC_Identifier *id, PSy
 			return TypeError;
 		}
 
+		if (ptype->VMInternalStruct && (!outertype || !outertype->VMInternalStruct))
+		{
+			Error(type, "Type %s not accessible", FName(id->Id).GetChars());
+			return TypeError;
+		}
+
 		if (id->SiblingNext != type->UserType)
 		{
 			assert(id->SiblingNext->NodeType == AST_Identifier);
 			ptype = ResolveUserType(
+				outertype,
 				type,
 				static_cast<ZCC_Identifier *>(id->SiblingNext),
 				&ptype->Symbols,

@@ -109,6 +109,7 @@ public:
 	uint8_t loadOp, storeOp, moveOp, RegType, RegCount;
 	EScopeFlags ScopeFlags = (EScopeFlags)0;
 	bool            SizeKnown = true;
+	bool            VMInternalStruct = false;
 
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
