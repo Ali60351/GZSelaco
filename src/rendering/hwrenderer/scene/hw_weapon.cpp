@@ -638,7 +638,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	scale = psp->baseScale.Y * (SCREENHEIGHT*vw) / (SCREENWIDTH * 240.0f);
 
 	// @Cockatrice - Pin to top of screen if desired
-	if (psp->Flags & PSPF_TOPSPRITE) {
+	if ((psp->Flags & PSPF_TOPSPRITE) || tex->isTopSprite()) {
 		ftexturemid = 100.f - sy - r.top + psp->GetYAdjust(screenblocks >= 11) - ftextureadj;
 		y2 = viewwindowy + vh / 2 + (ftexturemid * scale);
 		y1 = y2 - (r.height * scale) - 1;

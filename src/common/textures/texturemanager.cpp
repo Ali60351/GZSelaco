@@ -1111,6 +1111,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 
 			double scalex = 3.0, scaley = 3.0;
 			bool bWorldPanning = false, bNoTrim = false;
+			bool bTopSprite = false;
 			bool offset2set = false;
 			float LeftOffset[2] = { 0,0 };
 			float TopOffset[2] = { 0,0 };
@@ -1147,6 +1148,10 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 					else if (sc.Compare("NoTrim"))
 					{
 						bNoTrim = true;
+					}
+					else if (sc.Compare("TopSprite"))
+					{
+						bTopSprite = true;
 					}
 					else if (sc.Compare("NoMips")) {
 						mips = false;
@@ -1255,6 +1260,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 				tex->SetWorldPanning(bWorldPanning);
 				tex->SetNoTrimming(bNoTrim);
 				tex->SetNoMipmaps(!mips);
+				tex->SetTopSprite(bTopSprite);
 			}
 			
 

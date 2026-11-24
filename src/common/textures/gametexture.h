@@ -64,6 +64,7 @@ enum EGameTexFlags
 	GTexf_NoTrim = 1024,					// Don't perform trimming on this texture.
 	GTexf_Seen = 2048,						// Set to true when the texture is being used for rendering. Must be cleared manually if the check is needed.
 	GTexf_NoMips = 4096,					// Mipmaps are not required for this texture. Should be in FTexture, but for practicality purposes it is here now.
+	GTexf_TopSprite = 8192,					// Anchor weapon sprites using this texture to the top of the screen.
 };
 
 struct FMaterialLayers
@@ -174,9 +175,11 @@ public:
 	void SetWorldPanning(bool on) { if (on) flags |= GTexf_WorldPanning; else flags &= ~GTexf_WorldPanning; }
 	void SetNoTrimming(bool on) { if (on) flags |= GTexf_NoTrim; else flags &= ~GTexf_NoTrim; }
 	void SetNoMipmaps(bool on) { if (on) flags |= GTexf_NoMips; else flags &= ~GTexf_NoMips; }
+	void SetTopSprite(bool on) { if (on) flags |= GTexf_TopSprite; else flags &= ~GTexf_TopSprite; }
 	void SetNeverExpand(bool never) { expandSprite = never ? 0 : -1; }
 	bool GetNoTrimming() { return !!(flags & GTexf_NoTrim); }
 	bool GetNoMipmaps() const { return !!(flags & GTexf_NoMips); }
+	bool isTopSprite() const { return !!(flags & GTexf_TopSprite); }
 	bool allowNoDecals() const { return !!(flags & GTexf_NoDecals);	}
 	void SetNoDecals(bool on) { if (on) flags |= GTexf_NoDecals; else flags &= ~GTexf_NoDecals; }
 	void SetOffsetsNotForFont() { flags |= GTexf_OffsetsNotForFont; }
