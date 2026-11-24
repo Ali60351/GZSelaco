@@ -537,6 +537,7 @@ public:
 
 	level_info_t *info;
 	int			invasiontier;
+	int			minTechModules;
 	double		tilt, tiltAngle;
 	int			cluster;
 	int			clusterflags;
