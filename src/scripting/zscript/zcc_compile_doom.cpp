@@ -724,8 +724,12 @@ void ZCCDoomCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt 
 	}
 	else if (namenode->SiblingNext->SiblingNext == namenode)
 	{
-		// a two-name property
-		propname << FName(namenode->Id).GetChars() << "." << FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id).GetChars();
+		FName prefix(namenode->Id);
+		if (prefix == NAME_self)
+		{
+			prefix = cls->TypeName;
+		}
+		propname << prefix.GetChars() << "." << FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id).GetChars();
 	}
 	else
 	{

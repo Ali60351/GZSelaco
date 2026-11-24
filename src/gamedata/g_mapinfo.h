@@ -347,6 +347,7 @@ struct level_info_t
 	int			partime;
 	int			sucktime;
 	int			invasiontier;
+	int			minTechModules;
 	double		tilt, tiltAngle;
 	int32_t		flags;
 	uint32_t	flags2;
