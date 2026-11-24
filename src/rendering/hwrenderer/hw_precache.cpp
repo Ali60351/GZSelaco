@@ -24,6 +24,8 @@
 **
 */
 
+#include <cctype>
+
 #include "c_cvars.h"
 #include "filesystem.h"
 #include "r_data/r_translate.h"
@@ -40,6 +42,8 @@
 #include "modelrenderer.h"
 #include "hw_models.h"
 #include "d_main.h"
+#include "info.h"
+#include "vm.h"
 
 EXTERN_CVAR(Bool, gl_precache)
 EXTERN_CVAR(Bool, gl_precache_actors)
@@ -155,6 +159,54 @@ void hw_unloadTexture(FGameTexture* tex) {
 	}
 }
 
+
+DEFINE_ACTION_FUNCTION(_TexMan, UnloadSpriteFrames)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(spriteName);
+	PARAM_STRING(frames);
+	PARAM_BOOL(unloadAngles);
+
+	if (!screen || spriteName.Len() != 4)
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+	const auto spriteIndex = GetSpriteIndex(spriteName.GetChars(), false);
+	if (spriteIndex < 0)
+	{
+		ACTION_RETURN_BOOL(false);
+	}
+
+	const auto& sprite = sprites[spriteIndex];
+	TArray<FTextureID> textures;
+	for (const char* cursor = frames.GetChars(); *cursor; ++cursor)
+	{
+		const auto frame = std::toupper(static_cast<unsigned char>(*cursor)) - 'A';
+		if (static_cast<unsigned>(frame) >= sprite.numframes)
+		{
+			continue;
+		}
+		const auto& spriteFrame = SpriteFrames[sprite.spriteframes + frame];
+		const unsigned angleCount = unloadAngles ? countof(spriteFrame.Texture) : 1;
+		for (unsigned angle = 0; angle < angleCount; ++angle)
+		{
+			const auto texture = spriteFrame.Texture[angle];
+			if (texture.isValid() && textures.Find(texture) == textures.Size())
+			{
+				textures.Push(texture);
+			}
+		}
+	}
+	if (textures.Size() != 0)
+	{
+		screen->FlushBackground();
+		for (auto texture : textures)
+		{
+			hw_unloadTexture(TexMan.GetGameTexture(texture));
+		}
+	}
+	ACTION_RETURN_BOOL(textures.Size() != 0);
+}
 
 //==========================================================================
 //

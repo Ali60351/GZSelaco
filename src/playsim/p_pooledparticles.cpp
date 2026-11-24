@@ -91,6 +91,34 @@ DEFINE_ACTION_FUNCTION(_ParticleData, PlaySound)
 	ACTION_RETURN_INT(handle);
 };
 
+static sector_t* GetParticleSector(const particledata_t* particle)
+{
+	auto* subsector = particle->subsector;
+	if (!subsector && particle->definition && particle->definition->Level)
+	{
+		auto* level = particle->definition->Level;
+		if (level->subsectors.Size() != 0)
+		{
+			subsector = level->PointInRenderSubsector(particle->pos);
+		}
+	}
+	return subsector ? subsector->sector : nullptr;
+}
+
+DEFINE_ACTION_FUNCTION(_ParticleData, GetSector)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(particledata_t);
+	ACTION_RETURN_POINTER(GetParticleSector(self));
+}
+
+DEFINE_ACTION_FUNCTION(_ParticleData, CheckForSectorTag)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(particledata_t);
+	PARAM_INT(tag);
+	auto* sector = GetParticleSector(self);
+	ACTION_RETURN_BOOL(sector && sector->Level->SectorHasTag(sector, tag));
+}
+
 DEFINE_FIELD_X(ParticleAnimFrame, particleanimframe_t, frame);
 DEFINE_FIELD_X(ParticleAnimFrame, particleanimframe_t, duration);
 

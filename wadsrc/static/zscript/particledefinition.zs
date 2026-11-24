@@ -80,6 +80,8 @@ struct ParticleData
         Flags |= DPF_DESTROYED;
     }
 
+    native Sector GetSector() const;
+    native bool CheckForSectorTag(int tag) const;
     native void Sleep(int ticks);
     void Wake()
     {
