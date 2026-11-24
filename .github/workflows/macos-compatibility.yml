@@ -12,6 +12,8 @@ jobs:
     runs-on: macos-15-intel
     # Some MacPorts dependencies build from source with +universal.
     timeout-minutes: 90
+    env:
+      MACPORTS_VERSION: '2.12.7'
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -20,21 +22,74 @@ jobs:
 
       - name: Install MacPorts
         run: |
-          package=MacPorts-2.12.7-15-Sequoia.pkg
+          package="MacPorts-${MACPORTS_VERSION}-15-Sequoia.pkg"
           curl --fail --silent --show-error --location --retry 3 \
             --output "$package" \
-            "https://github.com/macports/macports-base/releases/download/v2.12.7/$package"
+            "https://github.com/macports/macports-base/releases/download/v${MACPORTS_VERSION}/$package"
           printf '%s  %s\n' 87b2e87ed7adc4aca947b42eb7ff991614cc0edfccb486237f2bbc75f28aae63 "$package" | shasum -a 256 -c
           sudo installer -pkg "$package" -target /
+          # Retain binary archives even on APFS, where MacPorts can use directory images.
+          printf '\nportimage_mode archive\n' | sudo tee -a /opt/local/etc/macports/macports.conf >/dev/null
 
       - name: Sync the MacPorts index
         run: sudo /opt/local/bin/port -N sync
 
-      - name: Install Universal 2 dependencies
+      - name: Compute MacPorts cache key
+        id: macports-key
+        shell: bash
         run: |
+          indexes=$(find /opt/local/var/macports/sources -type f -name PortIndex -exec shasum -a 256 {} +)
+          test -n "$indexes"
+          index_hash=$(printf '%s\n' "$indexes" | LC_ALL=C sort | shasum -a 256)
+          toolchain_hash=$(
+            { sw_vers -buildVersion; xcodebuild -version; xcrun --sdk macosx --show-sdk-version; } | shasum -a 256
+          )
+          prefix="macports-v1-universal2-${RUNNER_ARCH}-${MACPORTS_VERSION}-${toolchain_hash%% *}-"
+          printf 'prefix=%s\nkey=%s%s\n' "$prefix" "$prefix" "${index_hash%% *}" >> "$GITHUB_OUTPUT"
+          printf 'MACPORTS_ARCHIVES=%s/macports-archives\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
+      - name: Restore MacPorts archives
+        id: macports-cache
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ${{ env.MACPORTS_ARCHIVES }}
+          key: ${{ steps.macports-key.outputs.key }}
+          restore-keys: ${{ steps.macports-key.outputs.prefix }}
+
+      - name: Install Universal 2 dependencies
+        env:
+          MACPORTS_CACHE_MATCH: ${{ steps.macports-cache.outputs.cache-matched-key }}
+        run: |
+          if [[ -n "$MACPORTS_CACHE_MATCH" ]]; then
+            shopt -s nullglob
+            archives=("$MACPORTS_ARCHIVES"/*.tbz2)
+            if ((${#archives[@]})); then
+              # MacPorts matches these archives by version, variants, and architecture.
+              verified=/opt/local/var/macports/incoming/verified
+              sudo mkdir -p "$verified"
+              sudo cp "${archives[@]}" "$verified/"
+            fi
+          fi
           sudo /opt/local/bin/port -N install \
             glib2 +universal libsdl2 +universal libsndfile +universal \
             libvpx +universal MoltenVK +universal openal-soft +universal
+
+      - name: Collect MacPorts archives
+        id: macports-archives
+        if: steps.macports-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$MACPORTS_ARCHIVES"
+          # Keep any restored build-only archives for future dependency rebuilds.
+          sudo find /opt/local/var/macports/software -mindepth 2 -maxdepth 2 -type f -name '*.tbz2' \
+            -exec /bin/sh -c 'destination=$1; shift; cp "$@" "$destination/"' sh "$MACPORTS_ARCHIVES" {} +
+          sudo chown -R "$(id -u):$(id -g)" "$MACPORTS_ARCHIVES"
+
+      - name: Save MacPorts archives
+        if: steps.macports-archives.outcome == 'success'
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ${{ env.MACPORTS_ARCHIVES }}
+          key: ${{ steps.macports-key.outputs.key }}
 
       - name: Build Selaco.app
         env:
