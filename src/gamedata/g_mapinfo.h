@@ -343,11 +343,10 @@ struct level_info_t
 	TMap<FName, FExitText> ExitMapTexts;
 
 	int			cluster;
-	int			levelgroup, areaNum;
+	int			levelgroup, areaNum, minTechModules;
 	int			partime;
 	int			sucktime;
 	int			invasiontier;
-	int			minTechModules;
 	double		tilt, tiltAngle;
 	int32_t		flags;
 	uint32_t	flags2;

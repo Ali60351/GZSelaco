@@ -30,7 +30,7 @@ Download the `.zds` file for the game version you’re running and copy it into 
 
 - **Build and packaging.** GitHub Actions builds on Intel macOS 15 and verifies both the `arm64` and `x86_64` slices and the app signature. Minimum macOS version and full gameplay coverage across both architectures still need testing. [Successful Universal 2 build](https://github.com/Ali60351/GZSelaco/actions/runs/45452399854)
 - **Chapter 1.** The final Chapter 1 Steam archive reached the end of startup in a local diagnostic, and a macOS build has had a user smoke test. Full campaign testing is still open.
-- **Chapter 2.** The audited Steam archive requires ZScript `4.15.1`. This engine currently supports `4.13.0`, so the version check still blocks startup with that archive. The merged compatibility fixes address several script differences, including `topsprite`. [Engine version](src/version.h) · [Compatibility fixes](https://github.com/Ali60351/GZSelaco/pull/4) · [Follow-up fixes](https://github.com/Ali60351/GZSelaco/pull/6)
+- **Chapter 2.** This engine includes the upstream Chapter 2 update with ZScript `4.15.1`. Startup and gameplay with the original Chapter 2 archive on macOS still need testing. [Upstream Chapter 2 merge](https://github.com/TheCockatrice/GZSelaco/commit/8fab30043bb7bfe78034f21216520125f42b2228)
 
 If you have multiple `.ipk3` files or need a startup log, run the app from Terminal with the archive you want to test.
 
