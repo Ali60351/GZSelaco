@@ -11,16 +11,24 @@ To see build logs or download a recent build artifact, open the corresponding wo
 ## macOS installation
 
 1. Unzip `Selaco-universal.zip` and move `Selaco.app` to **Applications**.
-2. Get `Selaco.ipk3` from your Steam copy. For this build, use the final **Chapter 1** archive. If you already installed the `chapter1` branch on Windows or Linux, copy the file from that installation. To fetch just the data on your Mac, open `steam://open/console` while signed in to Steam and run the following in the Steam console. [Chapter 1 depot metadata](https://steamdb.info/app/1592280/depots/?branch=chapter1)
+2. Get `Selaco.ipk3` from your Steam copy. Copy it from a Windows or Linux installation of the Chapter 2 update, or open `steam://open/console` while signed in on your Mac and run this command to download the game-data depot for Steam public build `26879395`. [Steam depot metadata](https://steamdb.info/app/1592280/depots/)
 
    ```text
-   download_depot 1592280 1592286 4748164188059173032
+   download_depot 1592280 1592286 1897056463446939035
    ```
 
-3. Copy `Selaco.ipk3` from the download path Steam prints into `~/Library/Application Support/Selaco-EA/`. Create the folder if needed. In Finder, use **Go → Go to Folder** to open it.
+3. Copy `Selaco.ipk3` into `~/Library/Application Support/Selaco-EA/`. If you downloaded the depot, Steam prints its location in the console. Create the destination folder if needed. In Finder, use **Go → Go to Folder** to open it.
 4. Open `Selaco.app`. The app uses ad hoc signing. If Gatekeeper blocks the download, verify that it came from this fork’s Releases page and follow Apple’s app approval steps. [Open a downloaded app on macOS](https://support.apple.com/en-us/102445)
 
 To update, replace `Selaco.app` with the app from the new ZIP. The game data and saves live outside the app bundle.
+
+### Use the final Chapter 1 archive
+
+If you use Steam’s `chapter1` branch, copy `Selaco.ipk3` from that installation or run this Steam console command in step 2. [Chapter 1 depot metadata](https://steamdb.info/app/1592280/depots/?branch=chapter1)
+
+```text
+download_depot 1592280 1592286 4748164188059173032
+```
 
 ### Bring over a Steam save
 
@@ -28,9 +36,9 @@ Download the `.zds` file for the game version you’re running and copy it into 
 
 ## Testing status
 
-- **Build and packaging.** GitHub Actions builds on Intel macOS 15 and verifies both the `arm64` and `x86_64` slices and the app signature. Minimum macOS version and full gameplay coverage across both architectures still need testing. [Successful Universal 2 build](https://github.com/Ali60351/GZSelaco/actions/runs/45452399854)
-- **Chapter 1.** The final Chapter 1 Steam archive reached the end of startup in a local diagnostic, and a macOS build has had a user smoke test. Full campaign testing is still open.
-- **Chapter 2.** This engine includes the upstream Chapter 2 update with ZScript `4.15.1`. Startup and gameplay with the original Chapter 2 archive on macOS still need testing. [Upstream Chapter 2 merge](https://github.com/TheCockatrice/GZSelaco/commit/8fab30043bb7bfe78034f21216520125f42b2228)
+- **Build and packaging.** GitHub Actions builds on Intel macOS 15 and verifies both the `arm64` and `x86_64` slices and the app signature. Minimum macOS version and full gameplay coverage across both architectures still need testing. [Universal 2 build](https://github.com/Ali60351/GZSelaco/actions/runs/45583520719)
+- **Chapter 2 update.** On macOS, the maintainer started a new campaign and loaded an existing save with the updated engine (ZScript `4.15.1`). Gameplay in Chapter 2 levels still needs testing. [Tested macOS release](https://github.com/Ali60351/GZSelaco/releases/tag/macos-build-45583520719) · [Upstream engine update](https://github.com/TheCockatrice/GZSelaco/commit/8fab30043bb7bfe78034f21216520125f42b2228)
+- **Chapter 1 archive.** The final Chapter 1 Steam archive passed a startup check on Linux, and an earlier macOS build received a smoke test. Full campaign testing is still open.
 
 If you have multiple `.ipk3` files or need a startup log, run the app from Terminal with the archive you want to test.
 
