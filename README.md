@@ -18,9 +18,24 @@ To see build logs or download a recent build artifact, open the corresponding wo
    ```
 
 3. Copy `Selaco.ipk3` into `~/Library/Application Support/Selaco-EA/`. If you downloaded the depot, Steam prints its location in the console. Create the destination folder if needed. In Finder, use **Go → Go to Folder** to open it.
-4. Open `Selaco.app`. The app uses ad hoc signing. If Gatekeeper blocks the download, verify that it came from this fork’s Releases page and follow Apple’s app approval steps. [Open a downloaded app on macOS](https://support.apple.com/en-us/102445)
+4. Open `Selaco.app`. If macOS blocks it, follow the [first-launch steps below](#first-launch-and-gatekeeper).
 
 To update, replace `Selaco.app` with the app from the new ZIP. The game data and saves live outside the app bundle.
+
+### First launch and Gatekeeper
+
+The current release is signed ad hoc and has no Apple notarization ticket. Gatekeeper may block it on first launch or display a “damaged” message.
+
+1. Confirm you downloaded `Selaco-universal.zip` from this fork’s [Releases page](https://github.com/Ali60351/GZSelaco/releases).
+2. After trying to open Selaco, go to **System Settings → Privacy & Security**. If **Open Anyway** appears for Selaco, click it and confirm. [Apple’s app approval instructions](https://support.apple.com/en-us/102445)
+3. If **Open Anyway** is unavailable, open Terminal. Verify the app’s signature, then clear quarantine for this copy of Selaco. The command assumes you moved the app to **Applications** and your account owns the bundle.
+
+   ```sh
+   codesign --verify --deep --strict "/Applications/Selaco.app" &&
+     xattr -d com.apple.quarantine "/Applications/Selaco.app"
+   ```
+
+   When the command succeeds, open Selaco again. If signature verification fails, download a fresh ZIP from Releases and extract it in Finder.
 
 ### Use the final Chapter 1 archive
 
