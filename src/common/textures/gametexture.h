@@ -196,6 +196,8 @@ public:
 		return false;
 	}
 
+	bool IsHardwareCacheQueued(int translation);
+
 	void SetTranslucent(bool on) { Base->bTranslucent = on; }
 	void SetUseType(ETextureType type) { UseType = type; }
 	int GetRotations() const { return Rotations; }

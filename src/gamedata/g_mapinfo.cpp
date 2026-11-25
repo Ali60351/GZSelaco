@@ -1146,7 +1146,7 @@ DEFINE_MAP_OPTION(invasiontier, true)
 	info->invasiontier = parse.sc.Number;
 }
 
-DEFINE_MAP_OPTION(mintechmodules, true)
+DEFINE_MAP_OPTION(minTechModules, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
